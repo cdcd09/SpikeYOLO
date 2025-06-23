@@ -21,6 +21,11 @@ checkpoint(23M, T=2, D=4，GEN1，based on Spikingjelly):
 https://drive.google.com/file/d/1PnrsYWSOrCjvfRpYng_hsTcv35pGsrHb/view?usp=drive_link
 
 
+
+Replacing yolo_spikformer.py with yolo_spikformer_bin.py enables binary inference. However, in order to facilitate deployment, we have also made a series of optimizations to the model, including removing heavy parametric convolutions. Therefore, it is not possible to load the previous weights directly. Therefore, we publish the following weighted model specifically for binary inference:
+
+binary inference checkpoint(23M, T=1, D=4):https://drive.google.com/file/d/1YQ29eDUfmaze2jl_UREX4Zeb1u8tpHfl/view?usp=sharing
+
 ## Abstract
 
 Brain-inspired Spiking Neural Networks (SNNs) have bio-plausibility and low-power advantages over Artificial Neural Networks (ANNs). Applications of SNNs are currently limited to simple classification tasks because of their poor performance. In this work, we focus on bridging the performance gap between ANNs and SNNs on object detection. Our design revolves around network architecture and spiking neuron, include:(1)**SpikeYOLO**, We explore suitable architectures in SNNs for handling object detection tasks and propose SpikeYOLO, which simplifies YOLOv8 and incorporates meta SNN blocks. This inspires us that the complex modules in ANN may not be suitable for SNN architecture design. (2)**I-LIF Spiking Neuron**, We propose an I-LIF spiking neuron that combines integer-valued training with spike-driven inference. The former is used to reduce quantization errors in spiking neurons, and the latter is the basis of the low-power nature of SNNs. The proposed method achieves outstanding accuracy with low power consumption on object detection datasets, demonstrating the potential of SNNs in complex vision tasks. On the COCO dataset, we obtain **66.2%** mAP@50 and **48.9%** mAP@50:95, which is **+15.0%** and **+18.7%** higher than the prior state-of-the-art SNN, respectively. On the Gen1 dataset, SpikeYOLO is **+2.5%** better than ANN models with **5.7×** energy efficiency.
