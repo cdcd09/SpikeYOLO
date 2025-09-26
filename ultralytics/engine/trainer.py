@@ -284,7 +284,18 @@ class BaseTrainer:
 
     def _do_train(self, world_size=1):
         """Train completed, evaluate and plot if specified by arguments."""
-        if world_size > 1:
+        # Ensure DDP is initialized correctly when launched via torch.distributed.run.
+        # In child processes, args.device may be empty (default), leading to world_size=1 above,
+        # but LOCAL_RANK/WORLD_SIZE env vars are set. Initialize process group in that case.
+        if 'LOCAL_RANK' in os.environ and not dist.is_initialized():
+            try:
+                env_world_size = int(os.environ.get('WORLD_SIZE', '1'))
+            except ValueError:
+                env_world_size = 1
+            if env_world_size > 1 and world_size < 2:
+                world_size = env_world_size
+            self._setup_ddp(world_size)
+        elif world_size > 1:
             self._setup_ddp(world_size)
         self._setup_train(world_size)
 

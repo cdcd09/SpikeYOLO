@@ -32,12 +32,16 @@ RUN python3 -m pip install --upgrade pip wheel
 RUN pip install --no-cache -e ".[export]" albumentations comet pycocotools pytest-cov
 
 # Run exports to AutoInstall packages
-RUN yolo export model=tmp/yolov8n.pt format=edgetpu imgsz=32
-RUN yolo export model=tmp/yolov8n.pt format=ncnn imgsz=32
+
+#RUN yolo export model=tmp/yolov8n.pt format=edgetpu imgsz=320
+#RUN yolo export model=tmp/yolov8n.pt format=ncnn imgsz=320
 # Requires <= Python 3.10, bug with paddlepaddle==2.5.0 https://github.com/PaddlePaddle/X2Paddle/issues/991
-RUN pip install --no-cache paddlepaddle==2.4.2 x2paddle
+#RUN pip install --no-cache paddlepaddle==2.4.2 x2paddle
+RUN pip install --no-cache paddlepaddle==2.6.1 x2paddle
+
 # Fix error: `np.bool` was a deprecated alias for the builtin `bool` segmentation error in Tests
-RUN pip install --no-cache numpy==1.23.5
+#RUN pip install --no-cache numpy==1.23.5
+RUN pip install --upgrade numpy==1.26.4
 # Remove exported models
 RUN rm -rf tmp
 
