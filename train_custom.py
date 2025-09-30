@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import os
+import time
 from ultralytics import YOLO
 '''
 
@@ -62,8 +63,32 @@ def main():
         verbose=True,
     )
 
-    # Validation metrics
-    val_res = model.val(data=args.data, imgsz=args.imgsz, device=args.device if args.device else None)
+    # Free DDP contexts before single-GPU validation
+    try:
+        import torch
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+    except Exception:
+        torch = None  # type: ignore
+
+    # If multi-GPU was used, isolate validation to a single GPU and use a smaller batch
+    multi_gpu = bool(args.device and (',' in args.device))
+    if multi_gpu:
+        # Hide other GPUs from the validator process to prevent contention with any lingering contexts
+        os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+        time.sleep(2)  # give subprocesses a moment to release memory
+
+    val_device = '0' if multi_gpu else (args.device if args.device else None)
+    val_batch = max(1, args.batch // (2 if multi_gpu else 1))
+    try:
+        val_res = model.val(data=args.data, imgsz=args.imgsz, device=val_device, batch=val_batch, workers=2)
+    except Exception as e:
+        # Graceful fallback on CUDA OOM: try CPU validation
+        if 'CUDA out of memory' in str(e) or (torch is not None and isinstance(e, getattr(torch.cuda, 'OutOfMemoryError', tuple()))):
+            print('Validation OOM on GPU, falling back to CPU for metrics...')
+            val_res = model.val(data=args.data, imgsz=args.imgsz, device='cpu', batch=max(1, val_batch // 2), workers=0)
+        else:
+            raise
     print("Validation metrics:")
     print(val_res)
 
